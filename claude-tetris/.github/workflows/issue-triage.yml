@@ -1,0 +1,70 @@
+name: Issue Triage (Claude)
+
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  triage:
+    # Evitar bucle: no re-correr si el último actor fue un bot
+    if: github.event.sender.type != 'Bot'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write      # necesario para añadir labels y comentar
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Triage issue with Claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_args: '--allowed-tools "Bash(gh issue view:*),Bash(gh issue edit:*),Bash(gh issue comment:*),Bash(gh label list:*),Bash(gh label create:*),Bash(gh api:*)"'
+          prompt: |
+            Analiza el issue #${{ github.event.issue.number }} del repo ${{ github.repository }}.
+
+            Pasos:
+            1. Lee título y cuerpo completo con:
+               `gh issue view ${{ github.event.issue.number }} --repo ${{ github.repository }}`
+
+            2. Clasifícalo eligiendo 1 o más labels del siguiente conjunto estándar:
+               bug, enhancement, question, documentation, performance, ui/ux
+               - Si algún label no existe en el repo, créalo antes de asignarlo:
+                 `gh label create "<nombre>" --color "<hex>" --repo ${{ github.repository }}`
+               - Aplica los labels elegidos:
+                 `gh issue edit ${{ github.event.issue.number }} --add-label "<label1>,<label2>" --repo ${{ github.repository }}`
+
+            3. Comprueba si ya existe un comentario de diagnóstico previo tuyo en este issue:
+               `gh api repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments`
+               - Si existe, actualízalo con `gh api --method PATCH repos/${{ github.repository }}/issues/comments/<comment_id> -f body="..."`.
+               - Si NO existe, créalo:
+                 `gh issue comment ${{ github.event.issue.number }} --body "..." --repo ${{ github.repository }}`
+
+               El comentario debe estar escrito en Markdown compatible con GitHub (encabezados con `##`,
+               negrita con `**texto**`, listas con `-`, bloques de código con triple backtick, etc.)
+               para que se renderice correctamente en la interfaz de GitHub Issues.
+               Debe contener exactamente estas secciones:
+
+               ## 🔍 Diagnóstico de Claude
+
+               **Resumen**
+               Qué reporta el issue en una o dos oraciones.
+
+               **Diagnóstico**
+               Causa probable. Menciona los archivos/funciones del repositorio involucrados.
+               Toda la lógica del juego está en `game.js`; consulta `CLAUDE.md` para la
+               arquitectura (board model, lock cycle, game loop, scoring, DOM IDs, etc.).
+
+               **Solución sugerida**
+               Pasos concretos y ordenados para implementar el fix, redactados de forma
+               que un desarrollador o un agente de Claude pueda ejecutarlos directamente.
+
+               **Labels aplicados**
+               Lista los labels asignados y explica brevemente por qué cada uno aplica.
+        env:
+          GH_TOKEN: ${{ github.token }}
