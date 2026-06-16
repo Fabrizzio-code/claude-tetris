@@ -66,6 +66,35 @@
         <button id="restart-btn">Reiniciar</button>
       </div>
     </div>
+
+    <div id="pause-overlay" class="overlay hidden">
+      <div class="overlay-box pause-box">
+        <p class="pause-title">PAUSA</p>
+        <div class="pause-buttons">
+          <button id="pause-resume-btn" class="pause-btn pause-btn-primary">Reanudar</button>
+          <button id="pause-restart-btn" class="pause-btn">Reiniciar</button>
+          <button id="pause-controls-btn" class="pause-btn">Ver controles</button>
+        </div>
+        <div id="pause-controls-panel" class="pause-controls-panel hidden">
+          <ul class="pause-controls-list">
+            <li><kbd>←</kbd><kbd>→</kbd> mover</li>
+            <li><kbd>↑</kbd> / <kbd>X</kbd> rotar</li>
+            <li><kbd>↓</kbd> bajar</li>
+            <li><kbd>Space</kbd> caída rápida</li>
+            <li><kbd>P</kbd> / <kbd>Esc</kbd> pausa</li>
+          </ul>
+        </div>
+        <div class="pause-level-section">
+          <label class="pause-level-label" for="start-level-input">Nivel inicial</label>
+          <div class="pause-level-control">
+            <button id="start-level-dec" class="pause-level-btn" aria-label="Reducir nivel">−</button>
+            <input id="start-level-input" class="pause-level-input" type="number" min="1" max="15" value="1" />
+            <button id="start-level-inc" class="pause-level-btn" aria-label="Aumentar nivel">+</button>
+          </div>
+          <p class="pause-level-hint">Se aplica al reiniciar</p>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="game.js"></script>
